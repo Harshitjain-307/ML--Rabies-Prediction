@@ -92,8 +92,10 @@ def get_top_features(bundle: Dict, n: int = 5) -> List[Dict[str, Any]]:
     """Return top N features from the trained model."""
     feat_imp = bundle.get('feature_importances', [])
     result = []
-    for name, weight in feat_imp[:n]:
-        result.append({"feature": name, "weight": round(float(weight), 4)})
+    for item in feat_imp[:n]:
+        feature = item.get("feature", "unknown")
+        weight = item.get("weight", 0)
+        result.append({"feature": feature, "weight": round(float(weight), 4)})
     return result
 
 
@@ -105,7 +107,7 @@ def predict(data: Dict[str, Any]) -> Dict[str, Any]:
     cat_cols = bundle['cat_cols']
 
     # Build input DataFrame
-    input_dict = {col: [data[col]] for col in num_cols + cat_cols}
+    input_dict = {col: [data.get(col)] for col in num_cols + cat_cols}
     df = pd.DataFrame(input_dict)
 
     # Run inference
@@ -129,14 +131,16 @@ def get_model_info() -> Dict[str, Any]:
     """Return model metadata for the dashboard."""
     try:
         bundle = _load_model()
+        feat_imp = bundle.get("feature_importances", [])
         return {
             "accuracy": bundle.get("accuracy", 0),
             "auroc": bundle.get("auroc", 0),
             "confusion_matrix": bundle.get("confusion_matrix", []),
             "feature_importances": [
-                {"feature": f, "weight": round(float(w), 4)}
-                for f, w in bundle.get("feature_importances", [])[:12]
+                {"feature": item.get("feature", "unknown"), "weight": round(float(item.get("weight", 0)), 4)}
+                for item in feat_imp[:12]
             ],
         }
     except FileNotFoundError:
         return {"error": "Model not trained yet"}
+

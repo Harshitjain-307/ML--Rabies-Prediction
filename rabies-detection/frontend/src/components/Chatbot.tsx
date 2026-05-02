@@ -1,6 +1,20 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import {
+  MessageCircle,
+  X,
+  Send,
+  Bot,
+  User,
+  Loader2,
+  AlertTriangle,
+  Shield,
+  Syringe,
+  HelpCircle,
+  ChevronRight,
+  Info,
+  Sparkles
+} from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Message {
@@ -11,7 +25,6 @@ interface Message {
 }
 
 interface ChatbotProps {
-  /** Pass the current result context so the bot can give patient-specific advice */
   riskContext?: {
     riskLevel?: string;
     probability?: number;
@@ -19,6 +32,43 @@ interface ChatbotProps {
     recommendations?: string[];
   };
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const getRiskBadgeClass = (riskLevel?: string) => {
+  if (riskLevel === 'High') return 'bg-crimson-500/20 text-crimson-400 border-crimson-500/30';
+  if (riskLevel === 'Medium') return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+  return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+};
+
+const formatProbability = (value?: number) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return `${(value * 100).toFixed(0)}%`;
+};
+
+const getRiskIntro = (ctx?: ChatbotProps['riskContext']) => {
+  if (!ctx?.riskLevel) {
+    return `Greetings. I'm **RabiesAI Research Assistant**. 🔬
+    
+I can provide clinical guidance on:
+- **WHO Category III Protocols**
+- **Wound Irrigation Techniques**
+- **Symptom Logic (Hydrophobia/Paralysis)**
+- **Animal Epidemiology**
+- **Diagnostic Score Interpretation**
+
+Complete the clinical assessment for real-time diagnostic support.`;
+  }
+
+  const name = ctx.patientName || 'this patient';
+  return `Evaluation for **${name}** is active. 📋
+    
+**Diagnostic State:**
+- **Risk Classification:** ${ctx.riskLevel}
+- **Assessed Probability:** ${formatProbability(ctx.probability)}
+
+How can I assist with this clinical record? 
+*(e.g., "Explain priority recommendations" or "Next steps for high risk")*`;
+};
 
 // ── Clinical Knowledge Base ───────────────────────────────────────────────────
 const KNOWLEDGE: Array<{
@@ -28,64 +78,68 @@ const KNOWLEDGE: Array<{
   {
     patterns: [/pep|post.?exposure|prophylax/i],
     answer: () =>
-      `**Post-Exposure Prophylaxis (PEP)** involves:\n\n1. **Immediate wound washing** — soap & water for ≥15 min\n2. **Day 0** — First rabies vaccine dose + Rabies Immunoglobulin (RIG) infiltrated around the wound\n3. **Day 3, 7, 14** — Additional vaccine doses\n4. **Day 28** — Final dose for immunocompromised patients\n\n⚠️ PEP is nearly 100% effective if started before symptoms appear. Never delay!`,
+      `**Post-Exposure Prophylaxis (PEP) Protocol**
+      
+1. **Immediate Wound Hygiene:** Vigorously wash with soap/detergent and water for 15+ minutes.
+2. **Standard Vaccination:** Start the 4 or 5-dose vaccine course immediately (D0, D3, D7, D14, [D28]).
+3. **Passive Immunization (RIG):** Essential for Category III exposures.
+4. **Antibiotics/Tetanus:** Evaluate need based on wound severity.
+
+⚠️ **Rabies is fatal once symptoms appear.** PEP is a 100% effective emergency intervention if initiated promptly post-exposure.`,
   },
   {
     patterns: [/rig|immunoglobulin/i],
     answer: () =>
-      `**Rabies Immunoglobulin (RIG)** provides immediate passive immunity:\n\n- Dose: **20 IU/kg** body weight (human RIG) or **40 IU/kg** (equine RIG)\n- As much as anatomically feasible is infiltrated into and around the wound\n- Remainder given IM at a site distant from vaccine\n- Must be given on Day 0 — **never beyond 7 days** after first vaccine dose`,
+      `**Rabies Immunoglobulin (RIG) Guidelines**
+      
+- **Function:** Provides passive antibodies for immediate viral neutralization at the wound site.
+- **Indication:** Recommended for all high-risk (Category III) exposures.
+- **Administration:** Infiltrate as much as possible deep into and around all wounds.
+- **Timing:** Administer on D0 along with the first dose of vaccine.
+
+Consult a clinical expert for dosing (20 IU/kg for HRIG).`,
   },
   {
     patterns: [/wound|wash|clean|irrigat/i],
     answer: () =>
-      `**Wound First Aid — Critical Steps:**\n\n1. 🚿 Wash vigorously with **soap and running water for 15+ minutes**\n2. Apply **70% alcohol or povidone-iodine** antiseptic\n3. Do NOT suture the wound immediately (allows drainage)\n4. If suturing is needed, do it loosely after RIG infiltration\n5. Consider **tetanus prophylaxis** as well\n\nProper wound washing alone reduces rabies risk by up to 50%.`,
+      `**Acute Wound Management Protocol**
+      
+Immediate and thorough wound cleansing is critical for removing rabies virus particles:
+1. **Irrigation:** Use soap or detergent and copious amounts of running water for **15 minutes**.
+2. **Antiseptics:** Apply iodine-based solutions or 70% ethanol after washing.
+3. **Structural Care:** Delay suturing if possible to avoid trauma near nerve endings.
+
+*Proper irrigation can reduce viral load by up to 90%.*`,
   },
   {
     patterns: [/hydrophobi|water|swallow/i],
     answer: () =>
-      `**Hydrophobia** (fear of water) is a hallmark of **clinical encephalitic rabies**.\n\n🚨 If hydrophobia is present:\n- Rabies has likely progressed to symptomatic stage\n- Survival is extremely rare without aggressive ICU support\n- **Milwaukee Protocol** (induced coma) has shown limited success in select cases\n- Palliative / supportive care should be discussed with family\n- Immediate isolation and barrier nursing are essential`,
+      `**Hydrophobia & Spastic Symptoms**
+      
+If the patient displays:
+- **Hydrophobia:** Fear of water or intense spasms when attempting to drink.
+- **Aerophobia:** Spasms triggered by air currents.
+- **Hypersalivation or Agitation.**
+
+🚨 **This is a medical emergency.** Transfer the patient to intensive care immediately for palliative management and isolation. Hydrophobia is a pathognomonic sign of advanced rabies.`,
   },
   {
-    patterns: [/symptom|sign|what.*(look|watch)|early/i],
-    answer: () =>
-      `**Rabies Symptom Progression:**\n\n🟡 **Prodromal (2–10 days):** fever, headache, fatigue, tingling/pain at wound site\n\n🟠 **Acute Neurological Phase:**\n- *Furious form:* hydrophobia, aerophobia, agitation, hallucinations\n- *Paralytic form:* ascending paralysis (like Guillain-Barré)\n\n🔴 **Coma & Death:** typically within 7–14 days of symptom onset\n\n⚡ Incubation period: **2 weeks – 3 months** (can be up to 1 year)`,
-  },
-  {
-    patterns: [/dog|cat|bat|monkey|wild|animal.*type/i],
-    answer: () =>
-      `**Animal Risk Classification:**\n\n🔴 **High Risk:** Bats (even without visible bite), foxes, raccoons, skunks, wild carnivores\n🟠 **Moderate Risk:** Dogs, cats (especially stray/unvaccinated)\n🟡 **Lower Risk:** Monkeys (still require full PEP assessment)\n\n🐕 Dogs account for **>99% of human rabies deaths** globally.\n🦇 Bat exposure always warrants PEP evaluation — minor scratches are often missed.`,
-  },
-  {
-    patterns: [/vacc|immuniz|prevent/i],
-    answer: () =>
-      `**Rabies Vaccination:**\n\n💉 **Pre-Exposure Prophylaxis (PrEP):** Days 0, 7, 21/28 — for vets, lab workers, travelers to endemic areas\n\n💉 **Post-Exposure (PEP):** As above — never delay if bitten by a suspected animal\n\n✅ **Previously vaccinated patients** need only 2 booster doses (days 0 & 3) — no RIG required\n\nVaccine brands: Verorab, Rabipur, Imovax — all WHO-approved cell culture vaccines`,
-  },
-  {
-    patterns: [/high.?risk|danger|critical|urgent|emergency/i],
+    patterns: [/symptom|sign|watch|look for|warning/i],
     answer: (ctx) => {
-      const base = `**High Risk Protocol:**\n\n🚨 Immediate actions required:\n1. Administer RIG + first vaccine dose **NOW**\n2. Transport to emergency department\n3. Thorough wound debridement\n4. Neurological examination\n5. Report to public health authority\n6. Animal quarantine/testing if possible`;
+      const base = `**Clinical Symptom Monitoring**
+      
+**Prodromal Phase:**
+- Localized paraesthesia (tingling/itching) at the bite site.
+- Flu-like symptoms (fever, malaise).
+
+**Neurological Phase:**
+- **Furious Rabies:** Agitation, hydrophobia, aerophobia.
+- **Paralytic Rabies:** Slow progression of weakness starting at the wound site.
+
+🚨 Monitor for any altered mental status or neurological deficit.`;
+
       if (ctx?.riskLevel === 'High') {
-        return `${base}\n\n⚠️ Patient **${ctx.patientName ?? ''}** has a ${((ctx.probability ?? 0) * 100).toFixed(0)}% computed risk — all above steps apply immediately.`;
-      }
-      return base;
-    },
-  },
-  {
-    patterns: [/medium.?risk|moderate|watch/i],
-    answer: (ctx) => {
-      const base = `**Medium Risk Protocol:**\n\n1. Begin PEP vaccine series (days 0, 3, 7, 14)\n2. Thorough wound irrigation\n3. Monitor for neurological symptoms daily\n4. Animal surveillance — 10-day observation if dog/cat\n5. Follow-up appointment in 48–72 hours`;
-      if (ctx?.riskLevel === 'Medium') {
-        return `${base}\n\n📋 Patient **${ctx.patientName ?? ''}** scored ${((ctx.probability ?? 0) * 100).toFixed(0)}% — medium-tier protocol applies.`;
-      }
-      return base;
-    },
-  },
-  {
-    patterns: [/low.?risk|safe|minor|reassur/i],
-    answer: (ctx) => {
-      const base = `**Low Risk Assessment:**\n\n✅ Immediate hospitalization likely not needed, but:\n1. Clean the wound thoroughly\n2. Apply antiseptic\n3. Document the exposure incident\n4. Observe patient for 14 days\n5. Consider PrEP if in a high-risk occupation\n6. Seek care immediately if any symptoms develop`;
-      if (ctx?.riskLevel === 'Low') {
-        return `${base}\n\n🟢 Patient **${ctx.patientName ?? ''}** scored ${((ctx.probability ?? 0) * 100).toFixed(0)}% — follow standard low-risk wound care.`;
+        return `${base}\n\n⚠️ **Urgent:** Given the **High Risk** status, any neurological symptom warrants immediate emergency intervention.`;
       }
       return base;
     },
@@ -94,239 +148,280 @@ const KNOWLEDGE: Array<{
     patterns: [/next.?step|what.*do|should.*do|recommend|advice|suggest/i],
     answer: (ctx) => {
       if (!ctx?.riskLevel) {
-        return `To get personalised next-step recommendations, please complete a **Clinical Assessment** first.\n\nGeneral advice:\n- If bitten → wash wound immediately & seek medical care\n- If symptomatic (fever, tingling, hydrophobia) → go to ER now\n- If unsure → always err on the side of PEP`;
+        return `**Strategic Next Steps**
+        
+1. **Initialize Assessment:** Use the RabiesAI tool to quantify exposure risk.
+2. **Wound Care:** Wash all contact points with soap and water immediately.
+3. **Facility Visit:** Locate the nearest center providing modern cell-culture vaccines.
+4. **Vaccination:** Start PEP if the animal is wild or showing signs of rabies.`;
       }
-      const recs = ctx.recommendations?.slice(0, 3).join('\n') ?? '';
-      return `**Next Steps for ${ctx.patientName ?? 'this patient'} (${ctx.riskLevel} Risk, ${((ctx.probability ?? 0) * 100).toFixed(0)}%):**\n\n${recs}\n\n💬 Ask me about any specific step for more details!`;
+
+      const name = ctx.patientName || 'this patient';
+      const recs = ctx.recommendations?.length
+        ? ctx.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')
+        : `1. Immediate clinician review required.\n2. Verify PEP administration status.\n3. Watch for neurological prodrome.`;
+
+      return `**Actionable Protocols for ${name}**
+      
+**Current Risk Tier:** ${ctx.riskLevel}
+
+**Priority Actions:**
+${recs}
+
+Does the patient have access to high-quality vaccine supplies?`;
     },
   },
   {
-    patterns: [/diagnos|model|accuracy|xgboost|ml|machine.?learning|how.*work/i],
-    answer: () =>
-      `**About the AI Model:**\n\nThis tool uses an **XGBoost classifier** trained on 1,000 synthetic clinical records:\n\n- **Preprocessing:** RobustScaler (numerical) + OneHotEncoder (categorical)\n- **Features:** 17 clinical variables including animal type, wound severity, symptoms\n- **Performance:** ≥93% accuracy, ≥0.95 AUROC on hold-out test set\n- **Output:** Calibrated probability score + feature attributions\n\n⚠️ For clinical use only — not a substitute for specialist judgment.`,
-  },
-  {
-    patterns: [/incubat|how.?long|time|period/i],
-    answer: () =>
-      `**Rabies Incubation Period:**\n\n- Typical: **2–12 weeks**\n- Range: 4 days to several years (rare)\n- Shorter incubation: bites to head/neck or multiple severe wounds\n- Longer incubation: wounds on extremities, lower viral inoculum\n\nThe virus travels along peripheral nerves to the brain — this determines the timeline. Wound proximity to the brain is the primary determinant.`,
-  },
-  {
     patterns: [/hello|hi|hey|start|help|what.*can|who.*you/i],
-    answer: () =>
-      `Hello! I'm **RabiesAI Assistant** 🤖\n\nI can help you with:\n\n- 💉 PEP protocol and vaccine schedules\n- 🩹 Wound care and first aid steps\n- ⚠️ Risk-specific next steps (after assessment)\n- 🐕 Animal risk classification\n- 🧠 Neurological symptoms and clinical progression\n- 📊 Understanding the AI model\n\nWhat would you like to know?`,
+    answer: (ctx) => getRiskIntro(ctx),
   },
 ];
 
-const FALLBACK = `I'm not sure about that specific query. Try asking about:\n\n- **PEP protocol**\n- **Wound care**\n- **Risk level next steps**\n- **Animal risk classification**\n- **Symptom progression**\n- **How the AI model works**`;
+const FALLBACK = `I don't have a specific research-backed protocol for that query.
+    
+Try asking:
+- **How to clean the wound?**
+- **Explain PEP protocol**
+- **What symptoms are dangerous?**
+- **Next steps for this specific case**`;
 
 function getBotResponse(query: string, ctx?: ChatbotProps['riskContext']): string {
   for (const entry of KNOWLEDGE) {
-    if (entry.patterns.some((p) => p.test(query))) {
+    if (entry.patterns.some((pattern) => pattern.test(query))) {
       return entry.answer(ctx);
     }
   }
   return FALLBACK;
 }
 
-// ── Markdown-lite renderer ────────────────────────────────────────────────────
-function renderMarkdown(text: string) {
-  const lines = text.split('\n');
-  return lines.map((line, i) => {
-    const boldLine = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    if (line.startsWith('- ') || line.startsWith('• ')) {
-      return <li key={i} className="ml-4 list-disc text-white/80 text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: boldLine.replace(/^[-•]\s/, '') }} />;
+// ── Markdown-lite renderer ───────────────────────────────────────────────────
+function renderInlineBold(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.filter(Boolean).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} className="text-white font-bold">{part.slice(2, -2)}</strong>;
     }
-    if (/^\d+\.\s/.test(line)) {
-      return <li key={i} className="ml-4 list-decimal text-white/80 text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: boldLine.replace(/^\d+\.\s/, '') }} />;
-    }
-    if (line.trim() === '') return <br key={i} />;
-    return <p key={i} className="text-white/80 text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: boldLine }} />;
+    return <React.Fragment key={index}>{part}</React.Fragment>;
   });
 }
 
-// ── Chatbot Component ─────────────────────────────────────────────────────────
+function renderMarkdown(text: string) {
+  return text.split('\n').map((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={i} className="h-3" />;
+    
+    // Unordered lists
+    if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.match(/^\d+\.\s/)) {
+      const content = trimmed.replace(/^([-•]|\d+\.)\s/, '');
+      return (
+        <div key={i} className="flex gap-3 mb-2">
+          <ChevronRight className="w-3 h-3 text-crimson-500 mt-1 flex-shrink-0" />
+          <p className="text-slate-300 text-xs leading-relaxed">{renderInlineBold(content)}</p>
+        </div>
+      );
+    }
+
+    return (
+      <p key={i} className="text-slate-300 text-xs leading-relaxed mb-3 font-light">
+        {renderInlineBold(trimmed)}
+      </p>
+    );
+  });
+}
+
 const Chatbot: React.FC<ChatbotProps> = ({ riskContext }) => {
-  const [open, setOpen]         = useState(false);
-  const [input, setInput]       = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      role: 'bot',
-      text: `Hello! I'm **RabiesAI Assistant** 🤖\n\nAsk me about PEP protocols, wound care, risk-specific next steps, or anything rabies-related!\n\nYou can also ask **"What should I do next?"** after completing an assessment.`,
-      timestamp: new Date(),
-    },
-  ]);
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 0, role: 'bot', text: getRiskIntro(riskContext), timestamp: new Date() },
+  ]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef  = useRef<HTMLInputElement>(null);
-  let idCounter   = useRef(1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const idCounter = useRef(1);
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 200);
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        inputRef.current?.focus();
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
     }
   }, [open, messages]);
 
-  const sendMessage = useCallback(() => {
-    const text = input.trim();
-    if (!text || thinking) return;
+  useEffect(() => {
+    setMessages([{ id: 0, role: 'bot', text: getRiskIntro(riskContext), timestamp: new Date() }]);
+  }, [riskContext]);
 
-    const userMsg: Message = { id: idCounter.current++, role: 'user', text, timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+  const pushBotReply = useCallback((replyText: string) => {
+    setMessages(prev => [...prev, {
+      id: idCounter.current++,
+      role: 'bot',
+      text: replyText,
+      timestamp: new Date()
+    }]);
+  }, []);
+
+  const sendSpecificMessage = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || thinking) return;
+
+    setMessages(prev => [...prev, {
+      id: idCounter.current++,
+      role: 'user',
+      text: trimmed,
+      timestamp: new Date()
+    }]);
     setInput('');
     setThinking(true);
 
     setTimeout(() => {
-      const reply = getBotResponse(text, riskContext);
-      const botMsg: Message = { id: idCounter.current++, role: 'bot', text: reply, timestamp: new Date() };
-      setMessages(prev => [...prev, botMsg]);
+      pushBotReply(getBotResponse(trimmed, riskContext));
       setThinking(false);
-    }, 700 + Math.random() * 500);
-  }, [input, thinking, riskContext]);
+    }, 600);
+  }, [thinking, riskContext, pushBotReply]);
 
-  const SUGGESTIONS = riskContext?.riskLevel
-    ? [`What are next steps for ${riskContext.riskLevel} risk?`, 'Explain PEP protocol', 'What does the probability mean?']
-    : ['What is PEP?', 'How to clean a wound?', 'What are rabies symptoms?'];
+  const suggestionGroups = useMemo(() => {
+    const common = [
+      { title: 'Emergency', icon: AlertTriangle, items: ['Is this an emergency?', 'Explain PEP protocol'] },
+      { title: 'Wound Care', icon: Syringe, items: ['How to wash the wound?', 'Antiseptic use'] },
+      { title: 'Understanding', icon: Info, items: ['What does probability mean?', 'Symptoms to watch'] }
+    ];
+    return common;
+  }, []);
 
   return (
     <>
-      {/* Floating toggle button */}
+      {/* Floating Toggle Button */}
       <motion.button
-        id="chatbot-toggle-btn"
-        onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full btn-danger text-white shadow-2xl flex items-center justify-center"
-        whileHover={{ scale: 1.1 }}
+        id="chatbot-trigger"
+        onClick={() => setOpen(!open)}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-2xl accent-gradient text-white shadow-glow-lg flex items-center justify-center border border-white/10"
+        whileHover={{ scale: 1.05, rotate: 2 }}
         whileTap={{ scale: 0.95 }}
       >
-        {open ? <X className="w-5 h-5" /> : <MessageCircle className="w-6 h-6" />}
-        {!open && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-space-900 animate-pulse" />
-        )}
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-7 h-7" />}
+        {!open && <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-yellow-400 animate-pulse" />}
       </motion.button>
 
-      {/* Chat panel */}
       <AnimatePresence>
         {open && (
           <motion.div
-            id="chatbot-panel"
-            className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl overflow-hidden shadow-2xl"
-            style={{ height: '520px', background: '#0A1628', border: '1px solid rgba(255,255,255,0.1)' }}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            id="chatbot-window"
+            initial={{ opacity: 0, y: 40, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            exit={{ opacity: 0, y: 40, scale: 0.94 }}
+            className="fixed bottom-24 right-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] h-[640px] flex flex-col rounded-[32px] glass-card border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
           >
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-white/8 flex items-center gap-3 flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(10,22,40,0.9))' }}>
-              <div className="w-9 h-9 rounded-xl bg-crimson-500/20 border border-crimson-500/30 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-crimson-400" />
+            {/* Glossy Header */}
+            <div className="p-6 bg-slate-950/40 border-b border-white/5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-crimson-500/10 border border-crimson-500/20 flex items-center justify-center">
+                <Bot className="w-6 h-6 text-crimson-500" />
               </div>
-              <div>
-                <div className="font-bold text-sm">RabiesAI Assistant</div>
-                <div className="text-xs text-green-400 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-                  Clinical Decision Support
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-white outfit">RabiesAI Research Unit</h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Autonomous Assistant v2.0</span>
                 </div>
               </div>
               {riskContext?.riskLevel && (
-                <span className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full ${
-                  riskContext.riskLevel === 'High'   ? 'badge-high' :
-                  riskContext.riskLevel === 'Medium' ? 'badge-medium' : 'badge-low'
-                }`}>
-                  {riskContext.riskLevel} Risk
-                </span>
+                <div className={`px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${getRiskBadgeClass(riskContext.riskLevel)}`}>
+                  {riskContext.riskLevel} RISK
+                </div>
               )}
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-              {messages.map((m) => (
+            {/* Chat Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-hide">
+              {messages.map((msg) => (
                 <motion.div
-                  key={m.id}
-                  className={`flex gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  key={msg.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  <div className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
-                    m.role === 'bot' ? 'bg-crimson-500/20' : 'bg-white/10'
+                  <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center border transition-all ${
+                    msg.role === 'bot' ? 'bg-slate-900 border-white/5' : 'accent-gradient border-transparent'
                   }`}>
-                    {m.role === 'bot'
-                      ? <Bot className="w-3.5 h-3.5 text-crimson-400" />
-                      : <User className="w-3.5 h-3.5 text-white/70" />}
+                    {msg.role === 'bot' ? <Bot className="w-4 h-4 text-crimson-500" /> : <User className="w-4 h-4 text-white" />}
                   </div>
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 space-y-1 ${
-                    m.role === 'bot'
-                      ? 'rounded-tl-none bg-white/5 border border-white/8'
-                      : 'rounded-tr-none bg-crimson-500/20 border border-crimson-500/25'
+                  
+                  <div className={`max-w-[85%] rounded-2xl p-4 md:p-5 ${
+                    msg.role === 'bot' 
+                      ? 'bg-white/5 border border-white/5 rounded-tl-none' 
+                      : 'bg-crimson-500/10 border border-crimson-500/20 rounded-tr-none'
                   }`}>
-                    {m.role === 'bot'
-                      ? <div className="space-y-0.5">{renderMarkdown(m.text)}</div>
-                      : <p className="text-white/90 text-xs">{m.text}</p>
-                    }
-                    <p className="text-white/20 text-[10px] pt-1">
-                      {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    {msg.role === 'bot' ? (
+                      <div>{renderMarkdown(msg.text)}</div>
+                    ) : (
+                      <p className="text-slate-200 text-xs font-medium leading-relaxed">{msg.text}</p>
+                    )}
+                    <div className="mt-3 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </motion.div>
               ))}
 
               {thinking && (
-                <motion.div className="flex gap-2.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <div className="w-7 h-7 rounded-lg bg-crimson-500/20 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-3.5 h-3.5 text-crimson-400" />
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-crimson-500" />
                   </div>
-                  <div className="bg-white/5 border border-white/8 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-1">
+                  <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5">
                     {[0, 1, 2].map(i => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-crimson-400"
-                        animate={{ y: [0, -4, 0] }}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                      <motion.div 
+                        key={i} 
+                        className="w-1.5 h-1.5 rounded-full bg-crimson-500" 
+                        animate={{ opacity: [0.3, 1, 0.3] }} 
+                        transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }} 
                       />
                     ))}
                   </div>
-                </motion.div>
+                </div>
               )}
               <div ref={bottomRef} />
             </div>
 
-            {/* Quick suggestions */}
-            <div className="px-4 pb-2 flex gap-2 overflow-x-auto flex-shrink-0">
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setInput(s); setTimeout(sendMessage, 50); }}
-                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg glass-card border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-all"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            {/* Suggestions */}
+            <div className="px-6 py-4 bg-slate-950/20 border-t border-white/5 space-y-4">
+              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                {suggestionGroups.map(group => (
+                  <div key={group.title} className="flex gap-2 flex-shrink-0">
+                    {group.items.map(item => (
+                      <button
+                        key={item}
+                        onClick={() => sendSpecificMessage(item)}
+                        className="px-4 py-2 rounded-xl glass border border-white/5 text-[10px] font-bold text-slate-400 hover:text-white hover:border-crimson-500/50 transition-all whitespace-nowrap"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
 
-            {/* Input */}
-            <div className="p-4 border-t border-white/8 flex gap-2 flex-shrink-0">
-              <input
-                ref={inputRef}
-                id="chatbot-input"
-                type="text"
-                placeholder="Ask about PEP, symptoms, next steps…"
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                className="flex-1 form-input px-4 py-2.5 rounded-xl text-xs"
-              />
-              <button
-                id="chatbot-send-btn"
-                onClick={sendMessage}
-                disabled={!input.trim() || thinking}
-                className="btn-danger w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40"
-              >
-                {thinking
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Send className="w-4 h-4" />}
-              </button>
+              {/* Input Area */}
+              <div className="flex gap-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Ask for deeper clinical context..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendSpecificMessage(input)}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-xs font-medium focus:outline-none focus:border-crimson-500/50 transition-all placeholder:text-slate-600"
+                />
+                <button
+                  onClick={() => sendSpecificMessage(input)}
+                  disabled={!input.trim() || thinking}
+                  className="w-14 h-14 rounded-2xl accent-gradient text-white flex items-center justify-center shadow-lg disabled:opacity-20 transition-all hover:shadow-glow"
+                >
+                  {thinking ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

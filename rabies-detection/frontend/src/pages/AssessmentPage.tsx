@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { 
+  Activity, 
+  ChevronRight, 
+  ChevronLeft, 
+  Loader2, 
+  User, 
+  ShieldAlert, 
+  Stethoscope,
+  Info 
+} from 'lucide-react';
 import { predictRisk } from '../api/client';
 import type { PredictRequest } from '../types';
 
-// ── Initial form state ─────────────────────────────────────────────────────
 const INIT: PredictRequest = {
   patient_name: '',
   age: 30,
@@ -26,20 +34,17 @@ const INIT: PredictRequest = {
   paralysis: 0,
 };
 
-// ── Animal options with emoji ──────────────────────────────────────────────
 const ANIMALS = [
   { value: 'dog',        label: '🐕 Dog' },
   { value: 'cat',        label: '🐈 Cat' },
   { value: 'monkey',     label: '🐒 Monkey' },
   { value: 'bat',        label: '🦇 Bat' },
   { value: 'wild_animal',label: '🐺 Wild Animal' },
-  { value: 'none',       label: '❌ None' },
 ];
 
-const SEVERITIES = ['None', 'Mild', 'Moderate', 'Severe'];
-const LOCATIONS  = ['None', 'Limb', 'Trunk', 'Head/Neck'];
+const SEVERITIES = ['Mild', 'Moderate', 'Severe'];
+const LOCATIONS  = ['Limb', 'Trunk', 'Head/Neck'];
 
-// ── Toggle component ─────────────────────────────────────────────────────
 const Toggle: React.FC<{
   id: string;
   checked: boolean;
@@ -48,25 +53,28 @@ const Toggle: React.FC<{
   sublabel?: string;
   highRisk?: boolean;
 }> = ({ id, checked, onChange, label, sublabel, highRisk }) => (
-  <div
-    className={`glass-card rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all duration-200 ${
+  <motion.div
+    whileHover={{ scale: 1.01 }}
+    whileTap={{ scale: 0.99 }}
+    className={`p-5 rounded-2xl glass transition-all duration-300 border flex items-center justify-between cursor-pointer ${
       checked
         ? highRisk
-          ? 'border-crimson-500/50 bg-crimson-500/10'
+          ? 'border-crimson-500/50 bg-crimson-500/10 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
           : 'border-white/20 bg-white/5'
-        : 'border-white/5'
+        : 'border-white/5 hover:border-white/10'
     }`}
     onClick={() => onChange(!checked)}
   >
     <div className="flex-1">
-      <div className="font-medium text-sm">{label}</div>
-      {sublabel && <div className="text-xs text-white/40 mt-0.5">{sublabel}</div>}
+      <div className={`font-semibold text-sm ${checked ? 'text-white' : 'text-slate-300'}`}>{label}</div>
+      {sublabel && <div className="text-xs text-slate-500 mt-1 font-light tracking-wide">{sublabel}</div>}
     </div>
-    <label className="toggle-switch ml-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span className="toggle-slider" />
-    </label>
-  </div>
+    <div className="relative inline-flex items-center cursor-pointer ml-4">
+      <div className={`w-11 h-6 rounded-full transition-colors duration-300 ${checked ? 'bg-crimson-500' : 'bg-slate-800'}`}>
+        <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </div>
+    </div>
+  </motion.div>
 );
 
 const AssessmentPage: React.FC = () => {
@@ -90,296 +98,337 @@ const AssessmentPage: React.FC = () => {
       navigate(`/result/${res.id}`, { state: res });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
-      setError('Failed to get prediction. Is the backend running? ' + msg);
+      setError('Failed to process diagnostic assessment. ' + msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const steps = ['Patient Info', 'Exposure Details', 'Symptoms'];
+  const steps = [
+    { name: 'Patient', icon: User },
+    { name: 'Exposure', icon: ShieldAlert },
+    { name: 'Symptoms', icon: Stethoscope }
+  ];
   const progressPct = ((step - 1) / 2) * 100;
 
   return (
-    <div className="gradient-bg min-h-screen font-inter text-white">
+    <div className="min-h-screen mesh-gradient text-white pb-20">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-crimson-700 flex items-center justify-center">
-            <Activity className="w-4 h-4 text-white" />
-          </button>
-          <span className="font-bold">Clinical Assessment</span>
-          <span className="ml-auto text-white/40 text-sm">Step {step} of 3</span>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/20 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/')} 
+              className="p-2 rounded-xl accent-gradient hover:shadow-glow transition-all"
+            >
+              <Activity className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex flex-col">
+              <span className="font-bold outfit tracking-tight">Clinical Assessment</span>
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Diagnostic Module v2.4</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-xs text-slate-400">
+              <Info className="w-3 h-3" />
+              Progress: {Math.round(progressPct + 33.33)}%
+            </div>
+            <div className="text-crimson-500 font-bold outfit">0{step} <span className="text-slate-600">/ 03</span></div>
+          </div>
         </div>
-        {/* Progress bar */}
-        <div className="h-0.5 bg-white/5">
+        <div className="h-[2px] bg-white/5">
           <motion.div
-            className="h-full bg-gradient-to-r from-crimson-600 to-crimson-400"
+            className="h-full accent-gradient"
             animate={{ width: `${progressPct + 33.33}%` }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           />
         </div>
-      </div>
+      </header>
 
-      {/* Step labels */}
-      <div className="pt-28 pb-6 px-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-2 justify-center mb-8">
-            {steps.map((s, i) => (
-              <React.Fragment key={s}>
-                <div className={`flex items-center gap-2 text-sm font-medium ${
-                  i + 1 === step ? 'text-crimson-400' : i + 1 < step ? 'text-white/60' : 'text-white/20'
+      <main className="pt-32 px-4 max-w-3xl mx-auto">
+        {/* Step Progress Visual */}
+        <div className="flex items-center justify-between mb-12 px-2">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.name}>
+              <div className="flex flex-col items-center gap-3">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border ${
+                  i + 1 === step 
+                    ? 'accent-gradient shadow-glow border-transparent' 
+                    : i + 1 < step 
+                      ? 'bg-slate-800 border-white/10 text-slate-400' 
+                      : 'bg-white/5 border-white/5 text-slate-600'
                 }`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${
-                    i + 1 === step ? 'border-crimson-500 bg-crimson-500/20 text-crimson-400' :
-                    i + 1 < step  ? 'border-white/40 bg-white/10 text-white/60' :
-                                    'border-white/10 text-white/20'
-                  }`}>{i + 1}</div>
-                  <span className="hidden sm:block">{s}</span>
+                  <s.icon className="w-6 h-6" />
                 </div>
-                {i < 2 && <div className={`flex-1 h-px ${i + 1 < step ? 'bg-white/20' : 'bg-white/5'}`} />}
-              </React.Fragment>
-            ))}
-          </div>
+                <span className={`text-xs font-bold uppercase tracking-widest ${
+                  i + 1 === step ? 'text-white' : 'text-slate-600'
+                }`}>{s.name}</span>
+              </div>
+              {i < 2 && (
+                <div className="flex-1 h-[1px] bg-white/5 mx-4 mt-6">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: i + 1 < step ? '100%' : '0%' }}
+                    className="h-full bg-crimson-500/30"
+                  />
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
 
-          <AnimatePresence mode="wait">
-            {/* ──── Step 1 — Patient Info ──────────────────────────────────── */}
-            {step === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3 }}>
-                <div className="glass-card rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-2">Patient Information</h2>
-                  <p className="text-white/40 text-sm mb-8">Basic demographic details for the patient record.</p>
+        <AnimatePresence mode="wait">
+          {/* Step 1: Patient Details */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="glass-card rounded-[32px] p-8 md:p-12"
+            >
+              <div className="mb-10">
+                <h2 className="text-3xl font-bold outfit mb-2">Patient Metaphorics</h2>
+                <p className="text-slate-400 font-light">Identify basic demographics to initialize evaluation.</p>
+              </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white/70 mb-2">Patient Name</label>
-                      <input
-                        id="patient-name"
-                        type="text"
-                        placeholder="Enter patient name…"
-                        value={form.patient_name}
-                        onChange={(e) => set('patient_name', e.target.value)}
-                        className="form-input w-full px-4 py-3 rounded-xl text-sm"
-                      />
+              <div className="space-y-10">
+                <div className="group">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 group-focus-within:text-crimson-400 transition-colors">Legal Full Name</label>
+                  <input
+                    type="text"
+                    value={form.patient_name}
+                    onChange={(e) => set('patient_name', e.target.value)}
+                    placeholder="Enter full name..."
+                    className="form-input-premium w-full px-6 py-4 rounded-2xl text-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Biological Age</label>
+                    <span className="text-2xl font-bold text-crimson-500 outfit">{form.age} <span className="text-sm text-slate-600">YR</span></span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1} max={100}
+                    value={form.age}
+                    onChange={(e) => set('age', parseInt(e.target.value))}
+                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-crimson-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Biological Gender</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {['male', 'female'].map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => set('gender', g)}
+                        className={`py-4 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-3 border transition-all ${
+                          form.gender === g
+                            ? 'accent-gradient border-transparent shadow-lg text-white'
+                            : 'glass border-white/5 text-slate-400 hover:border-white/10'
+                        }`}
+                      >
+                        {g === 'male' ? 'Male Identification' : 'Female Identification'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Exposure Analysis */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="glass-card rounded-[32px] p-8 md:p-12 space-y-10"
+            >
+              <div>
+                <h2 className="text-3xl font-bold outfit mb-2">Exposure Vectors</h2>
+                <p className="text-slate-400 font-light">Trace the incident parameters and initial interventions.</p>
+              </div>
+
+              <Toggle
+                id="bite-occured"
+                checked={form.animal_bite === 1}
+                onChange={(v) => {
+                  setToggle('animal_bite')(v);
+                  if (!v) {
+                    set('animal_type', 'none');
+                    set('bite_severity', 'None');
+                    set('wound_location', 'None');
+                    set('days_since_bite', 0);
+                    set('wound_washed', 0);
+                    set('pep_started', 0);
+                  }
+                }}
+                label="Animal Bite Encounter"
+                sublabel="Presence of direct dermal/mucosal contact with animal saliva"
+              />
+
+              {form.animal_bite === 1 && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }} 
+                  className="space-y-10 pt-4 overflow-hidden"
+                >
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Animal Classification</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {ANIMALS.map((a) => (
+                        <button
+                          key={a.value}
+                          onClick={() => set('animal_type', a.value)}
+                          className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all ${
+                            form.animal_type === a.value
+                              ? 'bg-crimson-500/20 border-crimson-500/50 text-white'
+                              : 'glass border-white/5 text-slate-500 hover:border-white/10'
+                          }`}
+                        >
+                          {a.label}
+                        </button>
+                      ))}
                     </div>
+                  </div>
 
+                  <div className="grid md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-medium text-white/70 mb-2">Age</label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          id="patient-age"
-                          type="range"
-                          min={1} max={100}
-                          value={form.age}
-                          onChange={(e) => set('age', parseInt(e.target.value))}
-                          className="flex-1 accent-crimson-500"
-                        />
-                        <span className="w-16 text-center glass-card rounded-lg py-2 text-sm font-bold text-crimson-400">
-                          {form.age} yr
-                        </span>
+                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Severity Tier</label>
+                      <div className="flex flex-col gap-2">
+                        {SEVERITIES.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => set('bite_severity', s)}
+                            className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all text-left flex justify-between items-center ${
+                              form.bite_severity === s
+                                ? 'bg-crimson-500/20 border-crimson-500/50 text-white'
+                                : 'glass border-white/5 text-slate-500 hover:border-white/10'
+                            }`}
+                          >
+                            {s}
+                            {form.bite_severity === s && <div className="w-1.5 h-1.5 rounded-full bg-crimson-500 animate-pulse" />}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-white/70 mb-3">Gender</label>
-                      <div className="flex gap-3">
-                        {['male', 'female'].map((g) => (
+                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Wound Mapping</label>
+                      <div className="flex flex-col gap-2">
+                        {LOCATIONS.map((l) => (
                           <button
-                            key={g}
-                            id={`gender-${g}`}
-                            onClick={() => set('gender', g)}
-                            className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-all ${
-                              form.gender === g
-                                ? 'bg-crimson-500/20 border-crimson-500/50 text-crimson-400'
-                                : 'glass-card border-white/10 text-white/50 hover:border-white/20'
+                            key={l}
+                            onClick={() => set('wound_location', l)}
+                            className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all text-left flex justify-between items-center ${
+                              form.wound_location === l
+                                ? 'bg-crimson-500/20 border-crimson-500/50 text-white'
+                                : 'glass border-white/5 text-slate-500 hover:border-white/10'
                             }`}
                           >
-                            {g === 'male' ? '♂ Male' : '♀ Female'}
+                            {l}
+                            {form.wound_location === l && <div className="w-1.5 h-1.5 rounded-full bg-crimson-500 animate-pulse" />}
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
 
-            {/* ──── Step 2 — Exposure Details ──────────────────────────────── */}
-            {step === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3 }}>
-                <div className="glass-card rounded-2xl p-8 space-y-6">
                   <div>
-                    <h2 className="text-2xl font-bold mb-2">Exposure Details</h2>
-                    <p className="text-white/40 text-sm">Epidemiological exposure and wound information.</p>
-                  </div>
-
-                  {/* Animal bite toggle */}
-                  <Toggle
-                    id="animal-bite-toggle"
-                    checked={form.animal_bite === 1}
-                    onChange={(v) => {
-                      setToggle('animal_bite')(v);
-                      if (!v) {
-                        set('animal_type', 'none');
-                        set('bite_severity', 'None');
-                        set('wound_location', 'None');
-                        set('days_since_bite', 0);
-                        set('wound_washed', 0);
-                        set('pep_started', 0);
-                      }
-                    }}
-                    label="Animal Bite Occurred"
-                    sublabel="Patient was bitten by an animal"
-                  />
-
-                  {form.animal_bite === 1 && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-6 overflow-hidden">
-                      {/* Animal type */}
-                      <div>
-                        <label className="block text-sm font-medium text-white/70 mb-3">Animal Type</label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {ANIMALS.filter(a => a.value !== 'none').map((a) => (
-                            <button
-                              key={a.value}
-                              id={`animal-${a.value}`}
-                              onClick={() => set('animal_type', a.value)}
-                              className={`py-3 rounded-xl text-sm font-medium border transition-all ${
-                                form.animal_type === a.value
-                                  ? 'bg-crimson-500/20 border-crimson-500/50 text-crimson-400'
-                                  : 'glass-card border-white/10 text-white/50 hover:border-white/20'
-                              }`}
-                            >
-                              {a.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Bite severity */}
-                      <div>
-                        <label className="block text-sm font-medium text-white/70 mb-3">Bite Severity</label>
-                        <div className="grid grid-cols-4 gap-2">
-                          {SEVERITIES.filter(s => s !== 'None').map((s) => (
-                            <button
-                              key={s}
-                              id={`severity-${s.toLowerCase()}`}
-                              onClick={() => set('bite_severity', s)}
-                              className={`py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                                form.bite_severity === s
-                                  ? 'bg-crimson-500/20 border-crimson-500/50 text-crimson-400'
-                                  : 'glass-card border-white/10 text-white/50 hover:border-white/20'
-                              }`}
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Wound location */}
-                      <div>
-                        <label className="block text-sm font-medium text-white/70 mb-3">Wound Location</label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {LOCATIONS.filter(l => l !== 'None').map((l) => (
-                            <button
-                              key={l}
-                              id={`location-${l.toLowerCase().replace('/', '-')}`}
-                              onClick={() => set('wound_location', l)}
-                              className={`py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                                form.wound_location === l
-                                  ? 'bg-crimson-500/20 border-crimson-500/50 text-crimson-400'
-                                  : 'glass-card border-white/10 text-white/50 hover:border-white/20'
-                              }`}
-                            >
-                              {l}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Days since bite */}
-                      <div>
-                        <label className="block text-sm font-medium text-white/70 mb-2">Days Since Bite</label>
-                        <div className="flex items-center gap-4">
-                          <input
-                            id="days-since-bite"
-                            type="range" min={0} max={30}
-                            value={form.days_since_bite}
-                            onChange={(e) => set('days_since_bite', parseInt(e.target.value))}
-                            className="flex-1 accent-crimson-500"
-                          />
-                          <span className="w-20 text-center glass-card rounded-lg py-2 text-sm font-bold text-crimson-400">
-                            {form.days_since_bite}d
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Binary toggles */}
-                      <div className="space-y-3">
-                        <Toggle id="wound-washed" checked={form.wound_washed === 1} onChange={setToggle('wound_washed')} label="Wound Was Washed" sublabel="Wound irrigated with soap/water after bite" />
-                        <Toggle id="pep-started" checked={form.pep_started === 1} onChange={setToggle('pep_started')} label="PEP Already Started" sublabel="Post-exposure prophylaxis initiated" />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  <Toggle id="vaccination-status" checked={form.vaccination_status === 1} onChange={setToggle('vaccination_status')} label="Previously Vaccinated" sublabel="Prior rabies vaccination history" />
-                </div>
-              </motion.div>
-            )}
-
-            {/* ──── Step 3 — Symptoms ──────────────────────────────────────── */}
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3 }}>
-                <div className="glass-card rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-2">Clinical Symptoms</h2>
-                  <p className="text-white/40 text-sm mb-8">Toggle all symptoms currently observed in the patient.</p>
-
-                  <div className="space-y-3">
-                    <Toggle id="symptom-hydrophobia"     checked={form.hydrophobia === 1}      onChange={setToggle('hydrophobia')}      label="💧 Hydrophobia"                sublabel="Fear of water — HIGH RISK indicator" highRisk />
-                    <Toggle id="symptom-fever"           checked={form.fever === 1}             onChange={setToggle('fever')}             label="🌡️ Fever"                       sublabel="Elevated body temperature" />
-                    <Toggle id="symptom-tingling"        checked={form.tingling_at_wound === 1} onChange={setToggle('tingling_at_wound')} label="⚡ Tingling at Wound Site"      sublabel="Paraesthesia or itching at bite location" />
-                    <Toggle id="symptom-confusion"       checked={form.confusion === 1}         onChange={setToggle('confusion')}         label="🧠 Confusion / Disorientation"  sublabel="Altered mental status" />
-                    <Toggle id="symptom-muscle-spasms"   checked={form.muscle_spasms === 1}     onChange={setToggle('muscle_spasms')}     label="💪 Muscle Spasms"               sublabel="Involuntary muscle contractions" />
-                    <Toggle id="symptom-paralysis"       checked={form.paralysis === 1}         onChange={setToggle('paralysis')}         label="🫀 Paralysis"                   sublabel="Dumb/paralytic form of rabies" />
-                  </div>
-
-                  {error && (
-                    <div className="mt-6 p-4 rounded-xl bg-crimson-500/10 border border-crimson-500/30 text-crimson-400 text-sm">
-                      {error}
+                    <div className="flex justify-between items-center mb-4">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Temporal latency</label>
+                      <span className="text-xl font-bold text-crimson-500 outfit">{form.days_since_bite} <span className="text-xs text-slate-600 font-bold">DAYS AGO</span></span>
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    <input
+                      type="range" min={0} max={30}
+                      value={form.days_since_bite}
+                      onChange={(e) => set('days_since_bite', parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-crimson-500"
+                    />
+                  </div>
 
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-4 mt-6">
-            {step > 1 && (
-              <button
-                id="prev-step-btn"
-                onClick={() => setStep(s => s - 1)}
-                className="glass-card border border-white/10 px-6 py-3 rounded-xl text-sm font-medium hover:border-white/20 transition-all flex items-center gap-2"
-              >
-                <ChevronLeft className="w-4 h-4" /> Back
-              </button>
-            )}
-            <button
-              id={step < 3 ? 'next-step-btn' : 'submit-btn'}
-              onClick={() => step < 3 ? setStep(s => s + 1) : handleSubmit()}
-              disabled={loading || (step === 1 && !form.patient_name.trim())}
-              className="flex-1 btn-danger text-white font-bold py-3 rounded-xl text-sm flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Analysing…</>
-              ) : step < 3 ? (
-                <>Next <ChevronRight className="w-4 h-4" /></>
-              ) : (
-                <>Submit Assessment <ChevronRight className="w-4 h-4" /></>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Toggle id="wash" checked={form.wound_washed === 1} onChange={setToggle('wound_washed')} label="Dermal Irrigation" sublabel="Patient performed wound washing" />
+                    <Toggle id="pep" checked={form.pep_started === 1} onChange={setToggle('pep_started')} label="Prior PEP" sublabel="Prophylaxis already initiated" />
+                  </div>
+                </motion.div>
               )}
+
+              <Toggle id="vax" checked={form.vaccination_status === 1} onChange={setToggle('vaccination_status')} label="Pre-exposure Immunity" sublabel="Patient has prior history of rabies vaccination" />
+            </motion.div>
+          )}
+
+          {/* Step 3: Clinical Symptoms */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="glass-card rounded-[32px] p-8 md:p-12 mb-8"
+            >
+              <div className="mb-10 text-center">
+                <h2 className="text-3xl font-bold outfit mb-2">Neurological Profile</h2>
+                <p className="text-slate-400 font-light">Audit for clinical signs indicating disease progression.</p>
+              </div>
+
+              <div className="grid gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Toggle highRisk id="hydro" checked={form.hydrophobia === 1} onChange={setToggle('hydrophobia')} label="Hydrophobia" sublabel="Observable fear of water" />
+                  <Toggle highRisk id="confusion" checked={form.confusion === 1} onChange={setToggle('confusion')} label="Acute Confusion" sublabel="Altered neurological status" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Toggle highRisk id="spasms" checked={form.muscle_spasms === 1} onChange={setToggle('muscle_spasms')} label="Muscle Spasms" sublabel="Involuntary contractions" />
+                  <Toggle highRisk id="paralysis" checked={form.paralysis === 1} onChange={setToggle('paralysis')} label="Dumb Paralysis" sublabel="Indicative of paralytic rabies" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Toggle id="fever" checked={form.fever === 1} onChange={setToggle('fever')} label="High Fever" sublabel="Elevated core temperature" />
+                  <Toggle id="tingle" checked={form.tingling_at_wound === 1} onChange={setToggle('tingling_at_wound')} label="Paraesthesia" sublabel="Tingling at exposure site" />
+                </div>
+              </div>
+
+              {error && (
+                <div className="mt-8 p-5 rounded-2xl bg-crimson-500/10 border border-crimson-500/20 text-crimson-400 text-sm flex items-start gap-4 animate-shake">
+                  <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+                  <p className="font-medium">{error}</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-4 mt-10">
+          {step > 1 && (
+            <button
+              onClick={() => setStep(s => s - 1)}
+              className="px-8 py-4 rounded-2xl glass border border-white/5 text-slate-300 font-bold text-sm flex items-center gap-2 hover:bg-white/5 transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" /> Previous Step
             </button>
-          </div>
+          )}
+          <button
+            onClick={() => step < 3 ? setStep(s => s + 1) : handleSubmit()}
+            disabled={loading || (step === 1 && !form.patient_name.trim())}
+            className={`flex-1 btn-premium px-8 py-4 rounded-22xl accent-gradient text-white font-bold text-sm flex items-center justify-center gap-3 shadow-lg disabled:opacity-30 rounded-2xl ${
+              loading ? 'cursor-wait' : ''
+            }`}
+          >
+            {loading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> RUNNING CLASSIFIER...</>
+            ) : step < 3 ? (
+              <>CONTINUE TO NEXT PHASE <ChevronRight className="w-5 h-5" /></>
+            ) : (
+              <>GENERATE DIAGNOSTIC REPORT <ChevronRight className="w-5 h-5" /></>
+            )}
+          </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

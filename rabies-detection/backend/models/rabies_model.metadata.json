@@ -1,0 +1,181 @@
+{
+  "model_name": "XGBoost Rabies Risk Classifier",
+  "problem_type": "binary_classification",
+  "target_column": "target",
+  "num_cols": [
+    "age",
+    "animal_bite",
+    "vaccination_status",
+    "days_since_bite",
+    "fever",
+    "wound_washed",
+    "pep_started",
+    "tingling_at_wound",
+    "hydrophobia",
+    "confusion",
+    "muscle_spasms",
+    "paralysis"
+  ],
+  "cat_cols": [
+    "gender",
+    "bite_severity",
+    "wound_location",
+    "animal_type"
+  ],
+  "feature_columns": [
+    "age",
+    "animal_bite",
+    "vaccination_status",
+    "days_since_bite",
+    "fever",
+    "wound_washed",
+    "pep_started",
+    "tingling_at_wound",
+    "hydrophobia",
+    "confusion",
+    "muscle_spasms",
+    "paralysis",
+    "gender",
+    "bite_severity",
+    "wound_location",
+    "animal_type"
+  ],
+  "training_rows": 1000,
+  "train_size": 800,
+  "test_size": 200,
+  "class_distribution": {
+    "low_risk_count": 600,
+    "high_risk_count": 400
+  },
+  "accuracy": 0.805,
+  "auroc": 0.9029166666666667,
+  "precision": 0.7070707070707071,
+  "recall": 0.875,
+  "f1_score": 0.7821229050279329,
+  "confusion_matrix": [
+    [
+      91,
+      29
+    ],
+    [
+      10,
+      70
+    ]
+  ],
+  "feature_importances": [
+    {
+      "feature": "animal_bite",
+      "weight": 0.392494804114413
+    },
+    {
+      "feature": "bite_severity_None",
+      "weight": 0.26244504675596675
+    },
+    {
+      "feature": "pep_started",
+      "weight": 0.036555522736577827
+    },
+    {
+      "feature": "hydrophobia",
+      "weight": 0.02852831610868477
+    },
+    {
+      "feature": "vaccination_status",
+      "weight": 0.02272764271630986
+    },
+    {
+      "feature": "wound_location_None",
+      "weight": 0.021666361590244675
+    },
+    {
+      "feature": "muscle_spasms",
+      "weight": 0.019593744302168828
+    },
+    {
+      "feature": "bite_severity_Mild",
+      "weight": 0.016757001101553374
+    },
+    {
+      "feature": "wound_washed",
+      "weight": 0.015903041681466
+    },
+    {
+      "feature": "confusion",
+      "weight": 0.014233649791261566
+    },
+    {
+      "feature": "animal_type_cat",
+      "weight": 0.01361792453420612
+    },
+    {
+      "feature": "bite_severity_Severe",
+      "weight": 0.01326940129581682
+    },
+    {
+      "feature": "paralysis",
+      "weight": 0.012466235274598881
+    },
+    {
+      "feature": "wound_location_Head/Neck",
+      "weight": 0.012298395124173455
+    },
+    {
+      "feature": "wound_location_Limb",
+      "weight": 0.011069426584575976
+    },
+    {
+      "feature": "age",
+      "weight": 0.010213572854484746
+    },
+    {
+      "feature": "wound_location_Trunk",
+      "weight": 0.01017276602698767
+    },
+    {
+      "feature": "fever",
+      "weight": 0.009699588063383814
+    },
+    {
+      "feature": "animal_type_monkey",
+      "weight": 0.009559521813123119
+    },
+    {
+      "feature": "animal_type_wild_animal",
+      "weight": 0.00949020534067122
+    },
+    {
+      "feature": "days_since_bite",
+      "weight": 0.009368428402040696
+    },
+    {
+      "feature": "gender_female",
+      "weight": 0.009088276343746404
+    },
+    {
+      "feature": "animal_type_bat",
+      "weight": 0.008987653464814813
+    },
+    {
+      "feature": "animal_type_dog",
+      "weight": 0.00890708195971954
+    },
+    {
+      "feature": "tingling_at_wound",
+      "weight": 0.008343884224064098
+    },
+    {
+      "feature": "bite_severity_Moderate",
+      "weight": 0.008215764979078473
+    },
+    {
+      "feature": "gender_male",
+      "weight": 0.004326742815867495
+    },
+    {
+      "feature": "animal_type_none",
+      "weight": 0.0
+    }
+  ],
+  "trained_at_utc": "2026-04-30T10:20:24.840371+00:00",
+  "data_path": "C:\\Users\\hj307\\OneDrive\\Desktop\\new research project\\rabies-detection\\backend\\data\\processed\\rabies_v3.csv"
+}

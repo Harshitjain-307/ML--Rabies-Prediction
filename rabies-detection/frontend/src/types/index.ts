@@ -1,23 +1,30 @@
-// TypeScript types for the Rabies Detection API
+// TypeScript types for the Rabies Prediction API
+
+export type RiskLevel = 'Low' | 'Medium' | 'High';
+export type BinaryFlag = 0 | 1;
+export type Gender = 'male' | 'female';
+export type AnimalType = 'dog' | 'cat' | 'monkey' | 'bat' | 'wild_animal' | 'none';
+export type BiteSeverity = 'Mild' | 'Moderate' | 'Severe' | 'None';
+export type WoundLocation = 'Limb' | 'Trunk' | 'Head/Neck' | 'None';
 
 export interface PredictRequest {
   patient_name: string;
   age: number;
-  gender: string;
-  animal_bite: number;
-  animal_type: string;
-  bite_severity: string;
-  wound_location: string;
+  gender: Gender;
+  animal_bite: BinaryFlag;
+  animal_type: AnimalType;
+  bite_severity: BiteSeverity;
+  wound_location: WoundLocation;
   days_since_bite: number;
-  vaccination_status: number;
-  wound_washed: number;
-  pep_started: number;
-  fever: number;
-  tingling_at_wound: number;
-  hydrophobia: number;
-  confusion: number;
-  muscle_spasms: number;
-  paralysis: number;
+  vaccination_status: BinaryFlag;
+  wound_washed: BinaryFlag;
+  pep_started: BinaryFlag;
+  fever: BinaryFlag;
+  tingling_at_wound: BinaryFlag;
+  hydrophobia: BinaryFlag;
+  confusion: BinaryFlag;
+  muscle_spasms: BinaryFlag;
+  paralysis: BinaryFlag;
 }
 
 export interface FeatureWeight {
@@ -28,7 +35,7 @@ export interface FeatureWeight {
 export interface PredictResponse {
   id: number;
   patient_name: string;
-  risk_level: 'Low' | 'Medium' | 'High';
+  risk_level: RiskLevel;
   final_probability: number;
   symptom_boost: number;
   top_features: FeatureWeight[];
@@ -39,14 +46,33 @@ export interface PredictResponse {
 export interface PredictionHistoryItem {
   id: number;
   patient_name: string;
-  risk_level: 'Low' | 'Medium' | 'High';
+  risk_level: RiskLevel;
   probability: number;
   created_at: string;
 }
 
 export interface ModelInfo {
+  model_name?: string;
+  problem_type?: string;
+  training_rows?: number;
+  train_size?: number;
+  test_size?: number;
   accuracy: number;
   auroc: number;
+  precision?: number;
+  recall?: number;
+  f1_score?: number;
   confusion_matrix: number[][];
   feature_importances: FeatureWeight[];
+  trained_at_utc?: string;
+}
+
+export interface HealthResponse {
+  status: string;
+  version: string;
+}
+
+export interface ApiErrorResponse {
+  detail?: string | { message?: string } | Array<{ msg?: string }>;
+  message?: string;
 }
