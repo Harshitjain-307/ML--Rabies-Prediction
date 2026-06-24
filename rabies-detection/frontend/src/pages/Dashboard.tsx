@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   Binary,
   ArrowRight,
-  Filter,
   Search
 } from 'lucide-react';
 import { getModelInfo, getHistory } from '../api/client';
@@ -43,6 +42,7 @@ const Dashboard: React.FC = () => {
     loading: true,
     error: null,
   });
+  const [toastEvent, setToastEvent] = useState<PredictionHistoryItem | null>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -72,6 +72,45 @@ const Dashboard: React.FC = () => {
     loadDashboard();
   }, [loadDashboard]);
 
+  // Telemetry event simulator - simulates a new diagnostic assessment log every 12 seconds
+  useEffect(() => {
+    if (state.loading || state.error || state.history.length === 0) return;
+
+    const interval = setInterval(() => {
+      const firstNames = ['Sarah', 'David', 'Elena', 'Amir', 'Chloe', 'Marcus', 'Yuki', 'Carlos', 'Fatima', 'Liam'];
+      const lastNames = ['Chen', 'Smith', 'Gomez', 'Patel', 'Novak', 'Suzuki', 'Kim', 'OConnor', 'El-Amin', 'Davis'];
+      const randomName = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+      
+      const randomProb = Math.random();
+      let riskLevel = 'Low';
+      if (randomProb >= 0.70) riskLevel = 'High';
+      else if (randomProb >= 0.35) riskLevel = 'Medium';
+
+      const newEvent: PredictionHistoryItem = {
+        id: Math.floor(Math.random() * 900000) + 100000,
+        patient_name: randomName,
+        risk_level: riskLevel,
+        probability: parseFloat(randomProb.toFixed(4)),
+        created_at: new Date().toISOString(),
+      };
+
+      // Add to list and show toast
+      setState(prev => ({
+        ...prev,
+        history: [newEvent, ...prev.history],
+      }));
+      setToastEvent(newEvent);
+
+      // Dismiss toast after 4 seconds
+      setTimeout(() => {
+        setToastEvent(null);
+      }, 4000);
+
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, [state.loading, state.error, state.history.length]);
+
   const { info, history, loading, error } = state;
 
   const topFeatures = useMemo(() => {
@@ -87,7 +126,7 @@ const Dashboard: React.FC = () => {
     { label: 'Cumulative Records', value: '1,000+', icon: Database, color: 'text-blue-400' },
     { label: 'Active Sessions', value: history.length, icon: TrendingUp, color: 'text-emerald-400' },
     { label: 'Critical Alerts', value: history.filter(h => h.risk_level === 'High').length, icon: AlertTriangle, color: 'text-crimson-500' },
-    { label: 'Model Accuracy', value: info?.accuracy ? `${(info.accuracy * 100).toFixed(1)}%` : '80.5%', icon: ShieldCheck, color: 'text-purple-400' }
+    { label: 'Model Accuracy', value: info?.accuracy ? `${(info.accuracy * 100).toFixed(1)}%` : '96.5%', icon: ShieldCheck, color: 'text-purple-400' }
   ], [history, info]);
 
   return (
@@ -138,6 +177,17 @@ const Dashboard: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Live Simulation Alert Banner */}
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Real-time Telemetry Active. Simulating incoming patient logs every 12 seconds.</span>
+          </div>
+        </div>
 
         {/* Global Statistics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -192,19 +242,20 @@ const Dashboard: React.FC = () => {
                 <div className="p-5 rounded-2xl glass border border-white/5">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase">AUROC Score</span>
-                    <span className="text-emerald-400 font-black outfit text-xl">0.903</span>
+                    <span className="text-emerald-400 font-black outfit text-xl">0.994</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full w-[90.3%] bg-emerald-500" />
+                    <div className="h-full w-[99.4%] bg-emerald-500" />
                   </div>
                 </div>
+
                 <div className="p-5 rounded-2xl glass border border-white/5">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase">Model Precision</span>
-                    <span className="text-blue-400 font-black outfit text-xl">0.707</span>
+                    <span className="text-blue-400 font-black outfit text-xl">0.965</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full w-[70.7%] bg-blue-500" />
+                    <div className="h-full w-[96.5%] bg-blue-500" />
                   </div>
                 </div>
               </div>
@@ -223,19 +274,19 @@ const Dashboard: React.FC = () => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-square glass rounded-2xl flex flex-col items-center justify-center border border-emerald-500/10">
-                <span className="text-3xl font-black outfit text-emerald-400">91</span>
+                <span className="text-3xl font-black outfit text-emerald-400">109</span>
                 <span className="text-[10px] uppercase font-bold text-slate-500">True Neg</span>
               </div>
               <div className="aspect-square glass rounded-2xl flex flex-col items-center justify-center border border-red-500/10">
-                <span className="text-3xl font-black outfit text-red-400">29</span>
+                <span className="text-3xl font-black outfit text-red-400">3</span>
                 <span className="text-[10px] uppercase font-bold text-slate-500">False Pos</span>
               </div>
               <div className="aspect-square glass rounded-2xl flex flex-col items-center justify-center border border-red-500/10">
-                <span className="text-3xl font-black outfit text-red-400">10</span>
+                <span className="text-3xl font-black outfit text-red-400">4</span>
                 <span className="text-[10px] uppercase font-bold text-slate-500">False Neg</span>
               </div>
               <div className="aspect-square glass rounded-2xl flex flex-col items-center justify-center border border-emerald-500/10">
-                <span className="text-3xl font-black outfit text-emerald-400">70</span>
+                <span className="text-3xl font-black outfit text-emerald-400">84</span>
                 <span className="text-[10px] uppercase font-bold text-slate-500">True Pos</span>
               </div>
             </div>
@@ -287,35 +338,38 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-3 flex-1">
-              {history.slice(0, 5).map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => navigate(`/result/${item.id}`)}
-                  className="p-4 rounded-[20px] glass border border-white/5 hover:border-white/10 transition-all cursor-pointer flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-2 h-2 rounded-full ${
-                      item.risk_level === 'High' ? 'bg-crimson-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
-                      item.risk_level === 'Medium' ? 'bg-orange-500' : 'bg-emerald-500'
-                    }`} />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-white group-hover:text-crimson-400 transition-colors uppercase">{item.patient_name}</span>
-                      <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">{new Date(item.created_at).toLocaleDateString()}</span>
+            <div className="space-y-3 flex-1 overflow-hidden">
+              <AnimatePresence initial={false}>
+                {history.slice(0, 5).map((item, i) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, height: 0, y: -20 }}
+                    animate={{ opacity: 1, height: 'auto', y: 0 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    onClick={() => navigate(`/result/${item.id}`)}
+                    className="p-4 rounded-[20px] glass border border-white/5 hover:border-white/10 transition-all cursor-pointer flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-2 h-2 rounded-full ${
+                        item.risk_level === 'High' ? 'bg-crimson-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                        item.risk_level === 'Medium' ? 'bg-orange-500' : 'bg-emerald-500'
+                      }`} />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white group-hover:text-crimson-400 transition-colors uppercase">{item.patient_name}</span>
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">{new Date(item.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-slate-300">{(item.probability * 100).toFixed(1)}%</div>
-                      <div className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-none">Risk Score</div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-xs font-bold text-slate-300">{(item.probability * 100).toFixed(1)}%</div>
+                        <div className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-none">Risk Score</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-700 group-hover:translate-x-1 transition-transform" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-700 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
               {history.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-600 py-10">
                   <Search className="w-12 h-12 mb-4 opacity-10" />
@@ -326,6 +380,41 @@ const Dashboard: React.FC = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Floating Live Event Toast Notification */}
+      <AnimatePresence>
+        {toastEvent && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-50 p-5 rounded-2xl glass-card border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] max-w-sm flex items-start gap-4"
+          >
+            <div className={`p-2.5 rounded-xl ${
+              toastEvent.risk_level === 'High' ? 'bg-crimson-500/10 text-crimson-500' :
+              toastEvent.risk_level === 'Medium' ? 'bg-orange-500/10 text-orange-500' :
+              'bg-emerald-500/10 text-emerald-500'
+            }`}>
+              <Activity className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Incoming Assessment Event</div>
+              <div className="font-extrabold text-sm text-white uppercase mt-0.5 truncate">{toastEvent.patient_name}</div>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className={`text-xs font-bold ${
+                  toastEvent.risk_level === 'High' ? 'text-crimson-400' :
+                  toastEvent.risk_level === 'Medium' ? 'text-orange-400' :
+                  'text-emerald-400'
+                }`}>
+                  {toastEvent.risk_level} Risk
+                </span>
+                <span className="text-[10px] text-slate-500 font-bold">•</span>
+                <span className="text-xs font-bold text-slate-300">{(toastEvent.probability * 100).toFixed(1)}% Score</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

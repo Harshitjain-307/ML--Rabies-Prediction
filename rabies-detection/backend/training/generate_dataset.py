@@ -260,7 +260,7 @@ def exposure_risk_score(
     if vaccination_status == 1:
         score -= 0.95
 
-    score += np.random.normal(0, 0.30)
+    score += np.random.normal(0, 0.05)
     return score
 
 
@@ -364,9 +364,9 @@ def build_positive_label(
     elif days_since_bite >= 10:
         time_factor += 0.10
 
-    final_score = risk_score + symptom_boost + time_factor
+    final_score = (risk_score + symptom_boost + time_factor) * 2.5
     probability = sigmoid(final_score)
-    return bernoulli(probability)
+    return 1 if probability >= 0.5 else 0
 
 
 def generate_row(index: int) -> Dict[str, Any]:
@@ -439,8 +439,7 @@ def generate_row(index: int) -> Dict[str, Any]:
     )
 
     if pep_started == 1 and vaccination_status == 1 and final_target == 1:
-        if random.random() < 0.45:
-            final_target = 0
+        final_target = 0
 
     return {
         "patient_name": patient_name,

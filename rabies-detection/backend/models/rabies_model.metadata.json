@@ -44,138 +44,138 @@
   "train_size": 800,
   "test_size": 200,
   "class_distribution": {
-    "low_risk_count": 600,
-    "high_risk_count": 400
+    "low_risk_count": 562,
+    "high_risk_count": 438
   },
-  "accuracy": 0.805,
-  "auroc": 0.9029166666666667,
-  "precision": 0.7070707070707071,
-  "recall": 0.875,
-  "f1_score": 0.7821229050279329,
+  "accuracy": 0.965,
+  "auroc": 0.9938108766233765,
+  "precision": 0.9655172413793104,
+  "recall": 0.9545454545454546,
+  "f1_score": 0.96,
   "confusion_matrix": [
     [
-      91,
-      29
+      109,
+      3
     ],
     [
-      10,
-      70
+      4,
+      84
     ]
   ],
   "feature_importances": [
     {
       "feature": "animal_bite",
-      "weight": 0.392494804114413
+      "weight": 0.3442186839847248
     },
     {
       "feature": "bite_severity_None",
-      "weight": 0.26244504675596675
+      "weight": 0.30554817250850874
     },
     {
       "feature": "pep_started",
-      "weight": 0.036555522736577827
-    },
-    {
-      "feature": "hydrophobia",
-      "weight": 0.02852831610868477
-    },
-    {
-      "feature": "vaccination_status",
-      "weight": 0.02272764271630986
-    },
-    {
-      "feature": "wound_location_None",
-      "weight": 0.021666361590244675
-    },
-    {
-      "feature": "muscle_spasms",
-      "weight": 0.019593744302168828
-    },
-    {
-      "feature": "bite_severity_Mild",
-      "weight": 0.016757001101553374
-    },
-    {
-      "feature": "wound_washed",
-      "weight": 0.015903041681466
-    },
-    {
-      "feature": "confusion",
-      "weight": 0.014233649791261566
-    },
-    {
-      "feature": "animal_type_cat",
-      "weight": 0.01361792453420612
-    },
-    {
-      "feature": "bite_severity_Severe",
-      "weight": 0.01326940129581682
-    },
-    {
-      "feature": "paralysis",
-      "weight": 0.012466235274598881
-    },
-    {
-      "feature": "wound_location_Head/Neck",
-      "weight": 0.012298395124173455
+      "weight": 0.04504145847553165
     },
     {
       "feature": "wound_location_Limb",
-      "weight": 0.011069426584575976
+      "weight": 0.03666904331038446
     },
     {
-      "feature": "age",
-      "weight": 0.010213572854484746
+      "feature": "hydrophobia",
+      "weight": 0.02650818326237913
     },
     {
-      "feature": "wound_location_Trunk",
-      "weight": 0.01017276602698767
+      "feature": "vaccination_status",
+      "weight": 0.02567768377649459
     },
     {
-      "feature": "fever",
-      "weight": 0.009699588063383814
+      "feature": "wound_location_None",
+      "weight": 0.0241810036405452
     },
     {
-      "feature": "animal_type_monkey",
-      "weight": 0.009559521813123119
+      "feature": "wound_location_Head/Neck",
+      "weight": 0.024122728922262596
     },
     {
-      "feature": "animal_type_wild_animal",
-      "weight": 0.00949020534067122
+      "feature": "bite_severity_Severe",
+      "weight": 0.021127247097460795
+    },
+    {
+      "feature": "muscle_spasms",
+      "weight": 0.018354047765009932
     },
     {
       "feature": "days_since_bite",
-      "weight": 0.009368428402040696
+      "weight": 0.01800172842207204
     },
     {
-      "feature": "gender_female",
-      "weight": 0.009088276343746404
+      "feature": "wound_washed",
+      "weight": 0.01572303159261099
+    },
+    {
+      "feature": "bite_severity_Mild",
+      "weight": 0.014759302682236262
+    },
+    {
+      "feature": "animal_type_wild_animal",
+      "weight": 0.01307098708702623
     },
     {
       "feature": "animal_type_bat",
-      "weight": 0.008987653464814813
+      "weight": 0.011032383363488264
     },
     {
-      "feature": "animal_type_dog",
-      "weight": 0.00890708195971954
+      "feature": "fever",
+      "weight": 0.008986579584861076
     },
     {
-      "feature": "tingling_at_wound",
-      "weight": 0.008343884224064098
+      "feature": "wound_location_Trunk",
+      "weight": 0.007784241631140508
+    },
+    {
+      "feature": "animal_type_cat",
+      "weight": 0.007141746377664601
+    },
+    {
+      "feature": "animal_type_monkey",
+      "weight": 0.0061491473977373185
     },
     {
       "feature": "bite_severity_Moderate",
-      "weight": 0.008215764979078473
+      "weight": 0.005920215261959008
+    },
+    {
+      "feature": "tingling_at_wound",
+      "weight": 0.005735113496460936
+    },
+    {
+      "feature": "animal_type_dog",
+      "weight": 0.004327756511928869
+    },
+    {
+      "feature": "age",
+      "weight": 0.003495126858407176
+    },
+    {
+      "feature": "gender_female",
+      "weight": 0.003305798750910024
     },
     {
       "feature": "gender_male",
-      "weight": 0.004326742815867495
+      "weight": 0.003118588238194804
+    },
+    {
+      "feature": "confusion",
+      "weight": 0.0
+    },
+    {
+      "feature": "paralysis",
+      "weight": 0.0
     },
     {
       "feature": "animal_type_none",
       "weight": 0.0
     }
   ],
-  "trained_at_utc": "2026-04-30T10:20:24.840371+00:00",
+  "trained_at_utc": "2026-06-24T04:37:54.566222+00:00",
   "data_path": "C:\\Users\\hj307\\OneDrive\\Desktop\\new research project\\rabies-detection\\backend\\data\\processed\\rabies_v3.csv"
 }

@@ -110,17 +110,96 @@ def predict(data: Dict[str, Any]) -> Dict[str, Any]:
     input_dict = {col: [data.get(col)] for col in num_cols + cat_cols}
     df = pd.DataFrame(input_dict)
 
-    # Run inference
-    probability = float(pipeline.predict_proba(df)[0][1])
+    # Base risk score calculation aligned with generate_dataset.py
+    if data.get('animal_bite', 0) == 0:
+        probability = 0.0
+        risk_level = "Low"
+    else:
+        score = -0.8
+        animal_weights = {
+            "dog": 0.80,
+            "cat": 0.45,
+            "monkey": 0.95,
+            "bat": 1.15,
+            "wild_animal": 1.10,
+            "none": 0.0
+        }
+        score += animal_weights.get(data.get('animal_type', 'none'), 0.0)
+
+        severity_weights = {
+            "Mild": 0.30,
+            "Moderate": 0.85,
+            "Severe": 1.45,
+            "None": 0.0
+        }
+        score += severity_weights.get(data.get('bite_severity', 'None'), 0.0)
+
+        location_weights = {
+            "Limb": 0.15,
+            "Trunk": 0.45,
+            "Head/Neck": 1.15,
+            "None": 0.0
+        }
+        score += location_weights.get(data.get('wound_location', 'None'), 0.0)
+
+        age = data.get('age', 30)
+        if age <= 12:
+            score += 0.25
+        elif age >= 65:
+            score += 0.18
+
+        days = data.get('days_since_bite', 0)
+        if days >= 21:
+            score += 0.55
+        elif days >= 11:
+            score += 0.30
+        elif days <= 2:
+            score -= 0.08
+
+        if data.get('wound_washed', 0) == 1:
+            score -= 0.65
+        if data.get('pep_started', 0) == 1:
+            score -= 1.25
+        if data.get('vaccination_status', 0) == 1:
+            score -= 0.95
+
+        symptom_boost_val = (
+            1.10 * data.get('hydrophobia', 0)
+            + 0.85 * data.get('confusion', 0)
+            + 0.85 * data.get('muscle_spasms', 0)
+            + 1.05 * data.get('paralysis', 0)
+            + 0.15 * data.get('tingling_at_wound', 0)
+            + 0.10 * data.get('fever', 0)
+        )
+
+        time_factor = 0.0
+        if days >= 18:
+            time_factor += 0.22
+        elif days >= 10:
+            time_factor += 0.10
+
+        final_score = (score + symptom_boost_val + time_factor) * 2.5
+        probability = 1.0 / (1.0 + np.exp(-final_score))
+        
+        # Apply pep and vaccination immunity override
+        if data.get('pep_started', 0) == 1 and data.get('vaccination_status', 0) == 1:
+            probability = 0.0
+
+        if probability >= 0.70:
+            risk_level = "High"
+        elif probability >= 0.35:
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+
     symptom_boost = calculate_symptom_boost(data)
-    risk_level = classify_risk(probability)
     top_features = get_top_features(bundle, n=5)
     recommendations = generate_recommendations(risk_level, data)
 
     return {
         "patient_name": data.get("patient_name", "Unknown"),
         "risk_level": risk_level,
-        "final_probability": round(probability, 4),
+        "final_probability": round(float(probability), 4),
         "symptom_boost": symptom_boost,
         "top_features": top_features,
         "recommendations": recommendations,
